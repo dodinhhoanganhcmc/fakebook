@@ -1,53 +1,94 @@
+using System.Text;
+using DotNetEnv;
+using Fakebook.Server.Auth;
+using Fakebook.Server.Data;
+using Fakebook.Server.Endpoints;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+// Pull .env into process env so JWT_* / ConnectionStrings__fakebookdb resolve when running
+// the server directly (outside the AppHost). AppHost already loads .env itself.
+Env.TraversePath().Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
 builder.AddServiceDefaults();
-builder.AddRedisClientBuilder("cache")
-    .WithOutputCache();
+builder.AddRedisClientBuilder("cache").WithOutputCache();
+builder.AddNpgsqlDbContext<FakebookDbContext>("fakebookdb");
 
-// Add services to the container.
 builder.Services.AddProblemDetails();
-
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddCors(o => o.AddDefaultPolicy(p => p
+    .SetIsOriginAllowed(_ => true)
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .AllowCredentials()));
+
+var jwt = new JwtOptions
+{
+    Issuer              = builder.Configuration["JWT_ISSUER"]              ?? "fakebook",
+    Audience            = builder.Configuration["JWT_AUDIENCE"]            ?? "fakebook-clients",
+    Secret              = builder.Configuration["JWT_SECRET"]              ?? "dev-only-secret-change-me-32-chars-minimum-xxx",
+    AccessTokenMinutes  = int.TryParse(builder.Configuration["JWT_ACCESS_TOKEN_MINUTES"], out var am) ? am : 60,
+    RefreshTokenDays    = int.TryParse(builder.Configuration["JWT_REFRESH_TOKEN_DAYS"],   out var rd) ? rd : 14
+};
+builder.Services.Configure<JwtOptions>(opt =>
+{
+    opt.Issuer = jwt.Issuer; opt.Audience = jwt.Audience; opt.Secret = jwt.Secret;
+    opt.AccessTokenMinutes = jwt.AccessTokenMinutes; opt.RefreshTokenDays = jwt.RefreshTokenDays;
+});
+builder.Services.AddSingleton<TokenService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt =>
+    {
+        opt.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = jwt.Issuer,
+            ValidAudience            = jwt.Audience,
+            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret)),
+            ClockSkew                = TimeSpan.FromSeconds(30)
+        };
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseExceptionHandler();
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.UseCors();
 app.UseOutputCache();
+app.UseAuthentication();
+app.UseAuthorization();
 
-string[] summaries = ["Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"];
+// Apply migrations + seed on boot so a fresh checkout boots without manual `dotnet ef` steps.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FakebookDbContext>();
+    await db.Database.MigrateAsync();
+    await Seeder.SeedAsync(db);
+}
 
 var api = app.MapGroup("/api");
-api.MapGet("weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.CacheOutput(p => p.Expire(TimeSpan.FromSeconds(5)))
-.WithName("GetWeatherForecast");
+api.MapAuth();
+api.MapUsers();
+api.MapFriends();
+api.MapPosts();
+api.MapFeed();
+
+api.MapGet("/", () => Results.Ok(new { name = "Fakebook API", version = "0.1.0" }));
 
 app.MapDefaultEndpoints();
-
 app.UseFileServer();
+app.MapFallbackToFile("index.html");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
