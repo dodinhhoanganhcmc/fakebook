@@ -88,3 +88,54 @@ public record ActivityDto(
     Guid? TargetCommentId,
     Guid? TargetUserId,
     DateTime CreatedAt);
+
+// ----- Marketplace -----
+public record CreateListingRequest(
+    string Title,
+    string Description,
+    string? ImageUrl,
+    ListingCategory Category,
+    string? Location,
+    ListingType Type,
+    decimal Price,
+    int? AuctionDays);
+
+public record PlaceBidRequest(decimal Amount);
+
+public record BidDto(Guid Id, UserSummary Bidder, decimal Amount, DateTime CreatedAt);
+
+public record ListingDto(
+    Guid Id,
+    UserSummary Seller,
+    string Title,
+    string? ImageUrl,
+    ListingCategory Category,
+    string? Location,
+    ListingType Type,
+    decimal Price,
+    decimal CurrentPrice,
+    int BidCount,
+    DateTime? AuctionEndsAt,
+    ListingStatus Status,
+    DateTime CreatedAt);
+
+public record ListingDetailDto(
+    Guid Id,
+    UserSummary Seller,
+    string Title,
+    string Description,
+    string? ImageUrl,
+    ListingCategory Category,
+    string? Location,
+    ListingType Type,
+    decimal Price,
+    decimal CurrentPrice,
+    decimal MinNextBid,
+    int BidCount,
+    DateTime? AuctionEndsAt,
+    ListingStatus Status,
+    UserSummary? HighestBidder,
+    UserSummary? Buyer,
+    bool IsMine,
+    DateTime CreatedAt,
+    IReadOnlyList<BidDto> Bids);

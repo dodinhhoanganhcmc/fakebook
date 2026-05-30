@@ -47,5 +47,25 @@ public static class Seeder
         );
 
         await db.SaveChangesAsync();
+
+        // ----- Marketplace: a mix of fixed-price + auction listings -----
+        var l1 = new Listing { SellerId = bob.Id,   Title = "Trek Marlin 7 Mountain Bike",     Description = "2023 model, size L. Hydraulic disc brakes, barely ridden. Pickup in District 1.", ImageUrl = "https://picsum.photos/seed/fb-mk-bike/800/600",     Category = ListingCategory.SportingGoods, Location = "Saigon",  Type = ListingType.FixedPrice, Price = 420m };
+        var l2 = new Listing { SellerId = carol.Id, Title = "Canon EOS 90D DSLR (body only)",   Description = "32MP, 7k shutter count. Comes with battery, charger and strap. No reserve auction.",  ImageUrl = "https://picsum.photos/seed/fb-mk-camera/800/600",   Category = ListingCategory.Electronics,   Location = "Da Nang", Type = ListingType.Auction,    Price = 300m, AuctionEndsAt = DateTime.UtcNow.AddDays(3) };
+        var l3 = new Listing { SellerId = alice.Id, Title = "IKEA Bekant Standing Desk",        Description = "Electric sit/stand desk, 160x80cm, white. Works perfectly.",                          ImageUrl = "https://picsum.photos/seed/fb-mk-desk/800/600",     Category = ListingCategory.HomeGarden,    Location = "Hanoi",   Type = ListingType.FixedPrice, Price = 150m };
+        var l4 = new Listing { SellerId = dave.Id,  Title = "Vintage Vinyl Records (lot of 40)", Description = "Mostly 70s/80s rock and jazz. A few rare pressings. Selling the whole lot.",          ImageUrl = "https://picsum.photos/seed/fb-mk-vinyl/800/600",    Category = ListingCategory.Hobbies,       Location = "Hue",     Type = ListingType.Auction,    Price = 25m,  AuctionEndsAt = DateTime.UtcNow.AddDays(5) };
+        var l5 = new Listing { SellerId = bob.Id,   Title = "Leather Sofa, 3-seater",           Description = "Genuine leather, dark brown. Some wear on the armrests but very comfortable.",          ImageUrl = "https://picsum.photos/seed/fb-mk-sofa/800/600",     Category = ListingCategory.HomeGarden,    Location = "Saigon",  Type = ListingType.FixedPrice, Price = 300m };
+        var l6 = new Listing { SellerId = carol.Id, Title = "Custom Mechanical Keyboard 65%",   Description = "Hot-swappable, gateron browns, PBT keycaps. Built it myself, typing is lovely.",       ImageUrl = "https://picsum.photos/seed/fb-mk-keeb/800/600",     Category = ListingCategory.Electronics,   Location = "Da Nang", Type = ListingType.Auction,    Price = 60m,  AuctionEndsAt = DateTime.UtcNow.AddDays(2) };
+        var l7 = new Listing { SellerId = alice.Id, Title = "Patagonia Winter Jacket (M)",      Description = "Down-filled, worn one season. Warm and packs small. No tears.",                        ImageUrl = "https://picsum.photos/seed/fb-mk-jacket/800/600",   Category = ListingCategory.Clothing,      Location = "Hanoi",   Type = ListingType.FixedPrice, Price = 95m };
+        var l8 = new Listing { SellerId = dave.Id,  Title = "Nintendo Switch OLED + 4 games",   Description = "White OLED model with dock, plus Zelda, Mario Kart, Odyssey and Smash.",               ImageUrl = "https://picsum.photos/seed/fb-mk-switch/800/600",   Category = ListingCategory.Toys,          Location = "Hue",     Type = ListingType.FixedPrice, Price = 230m };
+        db.Listings.AddRange(l1, l2, l3, l4, l5, l6, l7, l8);
+        await db.SaveChangesAsync();
+
+        db.Bids.AddRange(
+            new Bid { ListingId = l2.Id, BidderId = alice.Id, Amount = 310m, CreatedAt = DateTime.UtcNow.AddHours(-20) },
+            new Bid { ListingId = l2.Id, BidderId = dave.Id,  Amount = 325m, CreatedAt = DateTime.UtcNow.AddHours(-6)  },
+            new Bid { ListingId = l4.Id, BidderId = bob.Id,   Amount = 30m,  CreatedAt = DateTime.UtcNow.AddHours(-12) },
+            new Bid { ListingId = l6.Id, BidderId = alice.Id, Amount = 65m,  CreatedAt = DateTime.UtcNow.AddHours(-3)  }
+        );
+        await db.SaveChangesAsync();
     }
 }

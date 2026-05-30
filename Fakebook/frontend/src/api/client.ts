@@ -8,6 +8,8 @@ import type {
   CommentDto,
   FriendDto,
   FriendRequestDto,
+  ListingDetailDto,
+  ListingDto,
   PostDto,
   UserProfile,
   UserSummary,
@@ -163,6 +165,23 @@ export interface UpdateProfileBody {
   gender?: string
   birthDate?: string | null
 }
+export interface CreateListingBody {
+  title: string
+  description: string
+  imageUrl: string | null
+  category: number
+  location: string | null
+  type: number
+  price: number
+  auctionDays: number | null
+}
+export interface ListingQuery {
+  category?: string
+  q?: string
+  type?: string
+  skip?: number
+  take?: number
+}
 
 export const api = {
   // ----- auth -----
@@ -220,4 +239,23 @@ export const api = {
   react: (postId: string, type: number) =>
     request<void>(`/posts/${postId}/reactions`, { method: 'POST', body: JSON.stringify({ type }) }),
   unreact: (postId: string) => request<void>(`/posts/${postId}/reactions`, { method: 'DELETE' }),
+
+  // ----- marketplace -----
+  listings: (opts: ListingQuery = {}) => {
+    const p = new URLSearchParams()
+    if (opts.category) p.set('category', opts.category)
+    if (opts.q) p.set('q', opts.q)
+    if (opts.type) p.set('type', opts.type)
+    p.set('skip', String(opts.skip ?? 0))
+    p.set('take', String(opts.take ?? 24))
+    return request<ListingDto[]>(`/marketplace?${p.toString()}`)
+  },
+  myListings: () => request<ListingDto[]>('/marketplace/mine'),
+  listing: (id: string) => request<ListingDetailDto>(`/marketplace/${id}`),
+  createListing: (body: CreateListingBody) =>
+    request<ListingDetailDto>('/marketplace', { method: 'POST', body: JSON.stringify(body) }),
+  placeBid: (id: string, amount: number) =>
+    request<ListingDetailDto>(`/marketplace/${id}/bids`, { method: 'POST', body: JSON.stringify({ amount }) }),
+  buyListing: (id: string) => request<ListingDetailDto>(`/marketplace/${id}/buy`, { method: 'POST' }),
+  deleteListing: (id: string) => request<void>(`/marketplace/${id}`, { method: 'DELETE' }),
 }

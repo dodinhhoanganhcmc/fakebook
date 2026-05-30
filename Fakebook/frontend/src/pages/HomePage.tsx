@@ -7,12 +7,14 @@ import { Composer } from '../components/Composer'
 import { Icon } from '../components/Icon'
 import type { IconName } from '../components/Icon'
 import { PostCard } from '../components/PostCard'
+import { Stories } from '../components/Stories'
 import { useAuth } from '../lib/auth'
 import { firstName, timeAgo } from '../lib/format'
+import { MarketplacePage } from './MarketplacePage'
 
 const PAGE = 20
 
-type View = { type: 'feed' } | { type: 'profile'; userId: string }
+type View = { type: 'feed' } | { type: 'profile'; userId: string } | { type: 'marketplace' }
 
 export function HomePage() {
   const { user, logout } = useAuth()
@@ -184,16 +186,21 @@ export function HomePage() {
         onAddFriend={addFriend}
         onHome={goHome}
         onLogout={logout}
+        onOpenMarketplace={() => setView({ type: 'marketplace' })}
         activeView={view.type}
       />
 
+      {view.type === 'marketplace' ? (
+        <MarketplacePage onOpenProfile={openProfile} />
+      ) : (
       <div className="layout">
-        <LeftRail me={me} onOpenProfile={() => openProfile(me.id)} />
+        <LeftRail me={me} onOpenProfile={() => openProfile(me.id)} onOpenMarketplace={() => setView({ type: 'marketplace' })} />
 
         <main className="center">
           {view.type === 'feed' ? (
             <>
               <Composer user={me} onCreated={handleCreated} />
+              <Stories me={me} friends={friends} onOpenProfile={openProfile} />
               {feed.length === 0 ? (
                 <div className="card empty-feed">
                   <h3>Your feed is quiet</h3>
@@ -245,6 +252,7 @@ export function HomePage() {
 
         <RightRail incoming={incoming} friends={friends} onAccept={accept} onDecline={decline} onOpenProfile={openProfile} />
       </div>
+      )}
 
       {editOpen && (
         <EditProfileModal
@@ -271,6 +279,7 @@ function TopBar({
   onAddFriend,
   onHome,
   onLogout,
+  onOpenMarketplace,
   activeView,
 }: {
   me: UserSummary
@@ -280,7 +289,8 @@ function TopBar({
   onAddFriend: (id: string) => void
   onHome: () => void
   onLogout: () => void
-  activeView: 'feed' | 'profile'
+  onOpenMarketplace: () => void
+  activeView: 'feed' | 'profile' | 'marketplace'
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<UserSummary[]>([])
@@ -365,18 +375,23 @@ function TopBar({
       </div>
 
       <nav className="topbar-tabs" aria-label="Primary">
-        {tabs.map((t) => (
-          <button
-            key={t.name}
-            type="button"
-            className={`tab${t.name === 'home' && activeView === 'feed' ? ' active' : ''}`}
-            onClick={onHome}
-            aria-label={t.label}
-            title={t.label}
-          >
-            <Icon name={t.name} size={26} />
-          </button>
-        ))}
+        {tabs.map((t) => {
+          const isActive =
+            (t.name === 'home' && activeView === 'feed') ||
+            (t.name === 'marketplace' && activeView === 'marketplace')
+          return (
+            <button
+              key={t.name}
+              type="button"
+              className={`tab${isActive ? ' active' : ''}`}
+              onClick={t.name === 'marketplace' ? onOpenMarketplace : onHome}
+              aria-label={t.label}
+              title={t.label}
+            >
+              <Icon name={t.name} size={26} />
+            </button>
+          )
+        })}
       </nav>
 
       <div className="topbar-right">
@@ -392,6 +407,9 @@ function TopBar({
         <div className="account-wrap">
           <button type="button" className="account-btn" onClick={() => setMenuOpen((o) => !o)} aria-label="Account">
             <Avatar name={me.displayName} src={me.avatarUrl} size={40} />
+            <span className="account-caret">
+              <Icon name="caret" size={12} />
+            </span>
           </button>
           {menuOpen && (
             <>
@@ -423,30 +441,52 @@ function TopBar({
   )
 }
 
-function LeftRail({ me, onOpenProfile }: { me: UserSummary; onOpenProfile: () => void }) {
+function LeftRail({ me, onOpenProfile, onOpenMarketplace }: { me: UserSummary; onOpenProfile: () => void; onOpenMarketplace: () => void }) {
+  const [expanded, setExpanded] = useState(false)
   const items: { icon: IconName; label: string }[] = [
     { icon: 'friends', label: 'Friends' },
     { icon: 'groups', label: 'Groups' },
     { icon: 'marketplace', label: 'Marketplace' },
-    { icon: 'watch', label: 'Watch' },
+    { icon: 'watch', label: 'Video' },
     { icon: 'bookmark', label: 'Saved' },
     { icon: 'location', label: 'Memories' },
+    { icon: 'globe', label: 'Pages' },
+    { icon: 'settings', label: 'Settings & privacy' },
   ]
+  const shown = expanded ? items : items.slice(0, 5)
   return (
     <aside className="left-rail" aria-label="Shortcuts">
       <button type="button" className="rail-item" onClick={onOpenProfile}>
         <Avatar name={me.displayName} src={me.avatarUrl} size={36} />
         <span>{me.displayName}</span>
       </button>
-      {items.map((it) => (
-        <button type="button" className="rail-item" key={it.label}>
+      {shown.map((it) => (
+        <button
+          type="button"
+          className="rail-item"
+          key={it.label}
+          onClick={it.label === 'Marketplace' ? onOpenMarketplace : undefined}
+        >
           <span className="rail-icon">
             <Icon name={it.icon} size={22} />
           </span>
           <span>{it.label}</span>
         </button>
       ))}
-      <div className="rail-footer">Fakebook · Built with .NET Aspire + React</div>
+      <button
+        type="button"
+        className={`rail-item see-more${expanded ? ' open' : ''}`}
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+      >
+        <span className="rail-icon see-more-icon">
+          <Icon name="caret" size={22} />
+        </span>
+        <span>{expanded ? 'See less' : 'See more'}</span>
+      </button>
+      <div className="rail-footer">
+        Privacy · Terms · Advertising · Ad Choices · Cookies · More · Fakebook © 2026
+      </div>
     </aside>
   )
 }
@@ -490,6 +530,37 @@ function RightRail({
           ))}
         </section>
       )}
+
+      <section className="rail-section bordered">
+        <h2>Sponsored</h2>
+        <button type="button" className="sponsored-ad">
+          <img className="sponsored-thumb" src="https://picsum.photos/seed/fakebook-ad-merino/232/232" alt="" />
+          <span className="sponsored-meta">
+            <span className="sponsored-title">Merino Wool Sneakers</span>
+            <span className="sponsored-domain">stride.co</span>
+          </span>
+        </button>
+        <button type="button" className="sponsored-ad">
+          <img className="sponsored-thumb" src="https://picsum.photos/seed/fakebook-ad-desk/232/232" alt="" />
+          <span className="sponsored-meta">
+            <span className="sponsored-title">Standing Desk, 40% off</span>
+            <span className="sponsored-domain">deskhaus.com</span>
+          </span>
+        </button>
+      </section>
+
+      {/* Placeholder chrome: no birthday data on the user summary yet. */}
+      <section className="rail-section bordered">
+        <h2>Birthdays</h2>
+        <div className="birthday">
+          <span className="birthday-icon">
+            <Icon name="gift" size={36} />
+          </span>
+          <p>
+            <strong>Linh Tran</strong> and <strong>2 others</strong> have birthdays today.
+          </p>
+        </div>
+      </section>
 
       <section className="rail-section">
         <h2>Contacts</h2>

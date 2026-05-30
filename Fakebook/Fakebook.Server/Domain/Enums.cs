@@ -36,5 +36,35 @@ public enum ActivityType
     FriendRequestSent = 6,
     FriendRequestAccepted = 7,
     ProfileUpdated = 8,
-    AvatarUpdated = 9
+    AvatarUpdated = 9,
+    ListingCreated = 10,
+    BidPlaced = 11,
+    ListingSold = 12
+}
+
+public enum ListingType
+{
+    FixedPrice = 0,
+    Auction = 1
+}
+
+public enum ListingStatus
+{
+    Active = 0,
+    Sold = 1,
+    Ended = 2,
+    Cancelled = 3
+}
+
+public enum ListingCategory
+{
+    Other = 0,
+    Vehicles = 1,
+    Electronics = 2,
+    HomeGarden = 3,
+    Clothing = 4,
+    Toys = 5,
+    SportingGoods = 6,
+    Hobbies = 7,
+    Property = 8
 }

@@ -84,6 +84,7 @@ api.MapUsers();
 api.MapFriends();
 api.MapPosts();
 api.MapFeed();
+api.MapMarketplace();
 
 api.MapGet("/", () => Results.Ok(new { name = "Fakebook API", version = "0.1.0" }));
 

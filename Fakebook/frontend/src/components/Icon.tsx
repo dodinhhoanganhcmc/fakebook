@@ -31,6 +31,9 @@ export type IconName =
   | 'location'
   | 'check'
   | 'userPlus'
+  | 'gift'
+  | 'clock'
+  | 'tag'
 
 const PATHS: Record<IconName, string> = {
   home: 'M11.3 3.3 3 10.5c-.3.3-.5.7-.5 1.1V20a1 1 0 0 0 1 1h5v-6h7v6h5a1 1 0 0 0 1-1v-8.4c0-.4-.2-.8-.5-1.1L12.7 3.3a1 1 0 0 0-1.4 0z',
@@ -77,6 +80,11 @@ const PATHS: Record<IconName, string> = {
   check: 'M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z',
   userPlus:
     'M9 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 5v1h11.4A6 6 0 0 1 15 18.5 13 13 0 0 0 9 14zm10 0v-3h-2v3h-3v2h3v3h2v-3h3v-2h-3z',
+  gift:
+    'M20 7h-3.2a3 3 0 0 0-4.8-3.6A3 3 0 0 0 7.2 7H4a1 1 0 0 0-1 1v2h8V8h2v2h8V8a1 1 0 0 0-1-1zm-8.5 0H10a1 1 0 1 1 1-1v1h.5zm3 0H14V6a1 1 0 1 1 1 1h-.5zM4 11v9a1 1 0 0 0 1 1h6V11H4zm9 10h6a1 1 0 0 0 1-1v-9h-7v10z',
+  clock:
+    'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm.5-13H11v6l5.2 3.1.8-1.3-4.5-2.7V7z',
+  tag: 'M21.4 11.6 12.4 2.6A2 2 0 0 0 11 2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 .6 1.4l9 9a2 2 0 0 0 2.8 0l7-7a2 2 0 0 0 0-2.8zM6.5 8A1.5 1.5 0 1 1 6.5 5a1.5 1.5 0 0 1 0 3z',
 }
 
 export function Icon({

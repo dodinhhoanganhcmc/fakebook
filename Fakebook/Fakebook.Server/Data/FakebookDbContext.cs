@@ -13,6 +13,8 @@ public class FakebookDbContext(DbContextOptions<FakebookDbContext> options) : Db
     public DbSet<Share>         Shares         => Set<Share>();
     public DbSet<Activity>      Activities     => Set<Activity>();
     public DbSet<RefreshToken>  RefreshTokens  => Set<RefreshToken>();
+    public DbSet<Listing>       Listings       => Set<Listing>();
+    public DbSet<Bid>           Bids           => Set<Bid>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -131,6 +133,37 @@ public class FakebookDbContext(DbContextOptions<FakebookDbContext> options) : Db
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(x => x.Token).IsUnique();
+        });
+
+        b.Entity<Listing>(e =>
+        {
+            e.HasOne(x => x.Seller)
+                .WithMany(u => u.Listings)
+                .HasForeignKey(x => x.SellerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Buyer)
+                .WithMany()
+                .HasForeignKey(x => x.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => x.CreatedAt);
+            e.HasIndex(x => new { x.Status, x.Category });
+        });
+
+        b.Entity<Bid>(e =>
+        {
+            e.HasOne(x => x.Listing)
+                .WithMany(l => l.Bids)
+                .HasForeignKey(x => x.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(x => x.Bidder)
+                .WithMany(u => u.Bids)
+                .HasForeignKey(x => x.BidderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasIndex(x => new { x.ListingId, x.Amount });
         });
     }
 }

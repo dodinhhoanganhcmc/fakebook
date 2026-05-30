@@ -42,6 +42,8 @@ public class User
     public ICollection<Share>         Shares         { get; set; } = new List<Share>();
     public ICollection<Activity>      Activities     { get; set; } = new List<Activity>();
     public ICollection<RefreshToken>  RefreshTokens  { get; set; } = new List<RefreshToken>();
+    public ICollection<Listing>       Listings       { get; set; } = new List<Listing>();
+    public ICollection<Bid>           Bids           { get; set; } = new List<Bid>();
 }
 
 public class Friendship
@@ -179,4 +181,63 @@ public class RefreshToken
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? RevokedAt { get; set; }
+}
+
+public class Listing
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public Guid SellerId { get; set; }
+    public User? Seller { get; set; }
+
+    [MaxLength(140)]
+    public string Title { get; set; } = "";
+
+    [MaxLength(10_000)]
+    public string Description { get; set; } = "";
+
+    [MaxLength(2048)]
+    public string? ImageUrl { get; set; }
+
+    public ListingCategory Category { get; set; } = ListingCategory.Other;
+
+    [MaxLength(256)]
+    public string? Location { get; set; }
+
+    public ListingType Type { get; set; } = ListingType.FixedPrice;
+
+    // Fixed-price: the asking price. Auction: the starting (reserve) bid.
+    [Column(TypeName = "numeric(12,2)")]
+    public decimal Price { get; set; }
+
+    // Auctions only; null for fixed-price listings.
+    public DateTime? AuctionEndsAt { get; set; }
+
+    public ListingStatus Status { get; set; } = ListingStatus.Active;
+
+    // Fixed-price buyer or auction winner once settled.
+    public Guid? BuyerId { get; set; }
+    public User? Buyer { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? DeletedAt { get; set; }
+
+    public ICollection<Bid> Bids { get; set; } = new List<Bid>();
+}
+
+public class Bid
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    public Guid ListingId { get; set; }
+    public Listing? Listing { get; set; }
+
+    public Guid BidderId { get; set; }
+    public User? Bidder { get; set; }
+
+    [Column(TypeName = "numeric(12,2)")]
+    public decimal Amount { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
